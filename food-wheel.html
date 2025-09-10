@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什么？美食转盘</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .title {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            }
+            to {
+                text-shadow: 0 0 30px rgba(255,255,255,0.8);
+            }
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: conic-gradient(
+                #FF6B6B 0deg 15deg,
+                #4ECDC4 15deg 30deg,
+                #45B7D1 30deg 45deg,
+                #96CEB4 45deg 60deg,
+                #FFEAA7 60deg 75deg,
+                #DDA0DD 75deg 90deg,
+                #98D8C8 90deg 105deg,
+                #F7DC6F 105deg 120deg,
+                #BB8FCE 120deg 135deg,
+                #85C1E9 135deg 150deg,
+                #F8C471 150deg 165deg,
+                #82E0AA 165deg 180deg,
+                #F1948A 180deg 195deg,
+                #85D1F2 195deg 210deg,
+                #F9E79F 210deg 225deg,
+                #D7BDE2 225deg 240deg,
+                #A3E4D7 240deg 255deg,
+                #FAD7A0 255deg 270deg,
+                #D5A6BD 270deg 285deg,
+                #AED6F1 285deg 300deg,
+                #F4D03F 300deg 315deg,
+                #A9DFBF 315deg 330deg,
+                #EC7063 330deg 345deg,
+                #7FB3D3 345deg 360deg
+            );
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            transition: transform 4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .food-item {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .food-emoji {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #FFD700;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .center-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
+
+        .center-button:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .center-button:active {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+
+        .result {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .result-food {
+            font-size: 3em;
+            margin: 10px 0;
+        }
+
+        .spin-btn {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .spin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,107,107,0.4);
+        }
+
+        .spin-btn:active {
+            transform: translateY(0);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 480px) {
+            .wheel-container {
+                width: 280px;
+                height: 280px;
+            }
+            
+            .title {
+                font-size: 2em;
+            }
+            
+            .food-item {
+                font-size: 12px;
+                padding-left: 15px;
+            }
+            
+            .food-emoji {
+                font-size: 16px;
+                margin-right: 5px;
+            }
+            
+            .center-button {
+                width: 60px;
+                height: 60px;
+                font-size: 14px;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🍽️ 今天吃什么？</h1>
+        
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <div class="wheel" id="wheel">
+                <!-- 美食选项将通过JavaScript动态生成 -->
+            </div>
+            <button class="center-button" id="spinBtn">开始</button>
+        </div>
+        
+        <button class="spin-btn" id="spinButton">🎲 转一转，决定今天吃什么！</button>
+        
+        <div class="result" id="result">
+            <h2>🎉 就决定是你了！</h2>
+            <div class="result-food" id="resultFood"></div>
+            <p>今天就吃这个吧！</p>
+        </div>
+    </div>
+
+    <script>
+        const foods = [
+            { name: '鸡腿饭', emoji: '🍗' },
+            { name: '卤肉饭', emoji: '🍖' },
+            { name: '水饺', emoji: '🥟' },
+            { name: '馄饨', emoji: '🥣' },
+            { name: '米线', emoji: '🍜' },
+            { name: '炒面', emoji: '🍝' },
+            { name: '拌面', emoji: '🍜' },
+            { name: '牛肉饭', emoji: '🥩' },
+            { name: '减脂餐', emoji: '🥗' },
+            { name: '沙拉', emoji: '🥬' },
+            { name: '包子', emoji: '🥟' },
+            { name: '关东煮', emoji: '🍢' },
+            { name: '汉堡', emoji: '🍔' },
+            { name: '锅盔', emoji: '🥙' },
+            { name: '土豆泥拌饭', emoji: '🥔' },
+            { name: '牛肉面', emoji: '🍲' },
+            { name: '自选菜', emoji: '🍱' },
+            { name: '麻辣烫', emoji: '🌶️' },
+            { name: '鸡公煲', emoji: '🍲' },
+            { name: '酥肉小锅', emoji: '🍖' },
+            { name: '麻辣香锅', emoji: '🔥' },
+            { name: '鸡蛋灌饼', emoji: '🥞' }
+        ];
+
+        let isSpinning = false;
+        let wheel = document.getElementById('wheel');
+        let spinBtn = document.getElementById('spinBtn');
+        let spinButton = document.getElementById('spinButton');
+        let result = document.getElementById('result');
+        let resultFood = document.getElementById('resultFood');
+
+        // 生成转盘扇形区域
+        function generateWheel() {
+            const angleStep = 360 / foods.length;
+            
+            foods.forEach((food, index) => {
+                const foodItem = document.createElement('div');
+                foodItem.className = 'food-item';
+                foodItem.style.transform = `rotate(${index * angleStep}deg)`;
+                foodItem.innerHTML = `
+                    <span class="food-emoji">${food.emoji}</span>
+                    <span>${food.name}</span>
+                `;
+                wheel.appendChild(foodItem);
+            });
+        }
+
+        // 转盘旋转函数
+        function spin() {
+            if (isSpinning) return;
+            
+            isSpinning = true;
+            spinBtn.innerHTML = '<div class="loading"></div>';
+            spinButton.innerHTML = '🎲 转盘中...';
+            spinButton.disabled = true;
+            result.classList.remove('show');
+            
+            // 随机角度（至少转3圈）
+            const randomIndex = Math.floor(Math.random() * foods.length);
+            const angleStep = 360 / foods.length;
+            const targetAngle = 360 * 5 + randomIndex * angleStep; // 5圈 + 随机位置
+            
+            wheel.style.transform = `rotate(${targetAngle}deg)`;
+            
+            setTimeout(() => {
+                isSpinning = false;
+                spinBtn.innerHTML = '开始';
+                spinButton.innerHTML = '🎲 再转一次！';
+                spinButton.disabled = false;
+                
+                // 显示结果
+                const selectedFood = foods[randomIndex];
+                resultFood.innerHTML = `${selectedFood.emoji} ${selectedFood.name}`;
+                result.classList.add('show');
+                
+                // 添加庆祝效果
+                createConfetti();
+            }, 4000);
+        }
+
+        // 庆祝彩带效果
+        function createConfetti() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.cssText = `
+                        position: fixed;
+                        width: 10px;
+                        height: 10px;
+                        background: ${colors[Math.floor(Math.random() * colors.length)]};
+                        left: ${Math.random() * 100}vw;
+                        top: -10px;
+                        border-radius: 50%;
+                        pointer-events: none;
+                        animation: fall 3s linear forwards;
+                        z-index: 1000;
+                    `;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 50);
+            }
+        }
+
+        // 添加下落动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 事件监听
+        spinBtn.addEventListener('click', spin);
+        spinButton.addEventListener('click', spin);
+
+        // 初始化转盘
+        generateWheel();
+
+        // 预防微信浏览器的一些兼容性问题
+        document.addEventListener('DOMContentLoaded', function() {
+            // 阻止页面滚动
+            document.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+            
+            // 阻止双击缩放
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(e) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        });
+
+        // 添加触摸反馈
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.transform += ' scale(0.95)';
+            });
+            
+            button.addEventListener('touchend', function() {
+                setTimeout(() => {
+                    this.style.transform = this.style.transform.replace(' scale(0.95)', '');
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
