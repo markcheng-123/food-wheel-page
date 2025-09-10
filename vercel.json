@@ -1,0 +1,5 @@
+{
+  "routes": [
+    { "src": "/", "dest": "/food-wheel.html" }
+  ]
+}
